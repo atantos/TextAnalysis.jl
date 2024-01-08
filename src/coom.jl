@@ -10,8 +10,8 @@
 """
     coo_matrix(::Type{T}, doc::Vector{AbstractString}, vocab::OrderedDict{AbstractString, Int}, window::Int, normalize::Bool)
 
-Basic low-level function that calculates the co-occurence matrix of a document.
-Returns a sparse co-occurence matrix sized `n × n` where `n = length(vocab)`
+Basic low-level function that calculates the co-occurrence matrix of a document.
+Returns a sparse co-occurrence matrix sized `n × n` where `n = length(vocab)`
 with elements of type `T`. The document `doc` is represented by a vector of its
 terms (in order)`. The keywords `window` and `normalize` indicate the size of the
 sliding word window in which co-occurrences are counted and whether to normalize
@@ -42,15 +42,19 @@ function coo_matrix(::Type{T},
     coom = spzeros(T, n, n)
     # Count co-occurrences
     for (i, token) in enumerate(doc)
-        @inbounds for j in max(1, i-window):min(m, i+window)
+        row = get(vocab, token, nothing)
+        isnothing(row) && continue
+
+        @inbounds for j in max(1, i - window):min(m, i + window)
+            i == j && continue
+
             wtoken = doc[j]
-            nm = T(ifelse(normalize, abs(i-j), 1))
-            row = get(vocab, token, nothing)
             col = get(vocab, wtoken, nothing)
-            if i!=j && row != nothing && col != nothing
-                coom[row, col] += one(T)/nm
-                coom[col, row] = coom[row, col]
-            end
+            isnothing(col) && continue
+
+            nm = T(ifelse(normalize, abs(i - j), 1))
+            coom[row, col] += one(T) / nm
+            coom[col, row] = coom[row, col]
         end
     end
     return coom
@@ -177,7 +181,7 @@ function CooMatrix{T}(doc; window::Int=5, normalize::Bool=true) where T<:Abstrac
     CooMatrix{T}(doc, terms, window=window, normalize=normalize)
 end
 
-CooMatrix(doc; window::Int=5, normalize::Bool=true) where T<:AbstractFloat =
+CooMatrix(doc; window::Int=5, normalize::Bool=true) =
     CooMatrix{Float64}(doc, window=window, normalize=normalize)
 
 """
