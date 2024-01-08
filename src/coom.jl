@@ -42,13 +42,12 @@ function coo_matrix(::Type{T},
     coom = spzeros(T, n, n)
     # Count co-occurrences
     for (i, token) in enumerate(doc)
+        inner_range = if mode == :directional
+            i:min(m, i + window)
+        else
+            max(1, i - window):min(m, i + window)
+        end
         row = get(vocab, token, nothing)
-        isnothing(row) && continue
-
-        @inbounds for j in max(1, i - window):min(m, i + window)
-            i == j && continue
-
-
         # looking forward
         @inbounds for j in inner_range
             wtoken = doc[j]
