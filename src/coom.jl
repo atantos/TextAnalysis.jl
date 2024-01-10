@@ -48,14 +48,18 @@ function coo_matrix(::Type{T},
             max(1, i - window):min(m, i + window)
         end
         row = get(vocab, token, nothing)
+        isnothing(row) && continue
+
         # looking forward
         @inbounds for j in inner_range
+            i == j && continue
+
             wtoken = doc[j]
             col = get(vocab, wtoken, nothing)
-            if i !== j && !isnothing(row) && !isnothing(col)
-                coom[row, col] += one(T) / nm
-                coom[col, row] = coom[row, col]
-            end
+            isnothing(col) && continue
+            nm = T(ifelse(normalize, abs(i - j), 1))
+            coom[row, col] += one(T) / nm
+            coom[col, row] = coom[row, col]
         end
     end
     return coom
