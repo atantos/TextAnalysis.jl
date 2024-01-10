@@ -53,7 +53,6 @@ function coo_matrix(::Type{T},
         # looking forward
         @inbounds for j in inner_range
             i == j && continue
-
             wtoken = doc[j]
             col = get(vocab, wtoken, nothing)
             isnothing(col) && continue
